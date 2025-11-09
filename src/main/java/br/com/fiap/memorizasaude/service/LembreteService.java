@@ -1,0 +1,63 @@
+package br.com.fiap.memorizasaude.service;
+
+import br.com.fiap.memorizasaude.model.Lembrete;
+import br.com.fiap.memorizasaude.repository.LembreteRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // ✅ 1. ADICIONAR IMPORT
+import java.util.List;
+
+@Service
+public class LembreteService {
+
+    @Autowired
+    private LembreteRepository lembreteRepository;
+
+    public Lembrete confirmarRecebimento(Long id) {
+        Lembrete lembrete = getById(id);
+
+        if (lembrete.isConfirmado()) {
+            throw new RuntimeException("Lembrete já havia sido confirmado.");
+        }
+
+        lembrete.setConfirmado(true);
+        return lembreteRepository.save(lembrete);
+    }
+
+    @Transactional // ✅ 2. ADICIONAR @TRANSACTIONAL (BOA PRÁTICA)
+    public Lembrete create(Lembrete lembrete) {
+        return lembreteRepository.save(lembrete);
+    }
+
+    // ✅ 3. ADICIONAR O MÉTODO UPDATE (PUT) COMPLETO
+    @Transactional
+    public Lembrete update(Long id, Lembrete lembreteAtualizado) {
+        Lembrete lembreteExistente = getById(id); // Reusa o getById para verificar se existe
+
+        // Atualiza os campos do objeto existente com os novos dados
+        lembreteExistente.setPaciente(lembreteAtualizado.getPaciente());
+        lembreteExistente.setEspecialidade(lembreteAtualizado.getEspecialidade());
+        lembreteExistente.setDataConsulta(lembreteAtualizado.getDataConsulta());
+        lembreteExistente.setHoraConsulta(lembreteAtualizado.getHoraConsulta());
+        lembreteExistente.setConfirmado(lembreteAtualizado.isConfirmado()); // Atualiza o 'confirmado'
+
+        return lembreteRepository.save(lembreteExistente);
+    }
+
+    public Lembrete getById(Long id) {
+        return lembreteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Lembrete não encontrado: " + id));
+    }
+
+    public List<Lembrete> getAll() {
+        return lembreteRepository.findAll();
+    }
+
+    @Transactional // ✅ 4. ADICIONAR @TRANSACTIONAL (BOA PRÁTICA)
+    public void delete(Long id) {
+        if (!lembreteRepository.existsById(id)) {
+            throw new RuntimeException("Lembrete não encontrado para deletar: " + id);
+        }
+        lembreteRepository.deleteById(id);
+    }
+}
